@@ -131,27 +131,27 @@ export default connect(
 create a folder called `api` and inside `jsonplaceholder.js` with the following content:
 
 ```javascript
-import axios from 'axios';
+import axios from "axios";
 
 export default axios.create({
-    baseURL: 'http://jsonplaceholder.typicode.com'
-})
+  baseURL: "http://jsonplaceholder.typicode.com"
+});
 ```
 
 Then inside the action we hookup the axios and return the payload as follows:
 
 ```javascript
-import jsonPlaceholder from '../apis/jsonPlaceholder';
-
+import jsonPlaceholder from "../apis/jsonPlaceholder";
 
 export const fetchPosts = async () => {
-    const response = await jsonPlaceholder.get('/posts');
-    return {
-        type: "FETCH_POSTS",
-        payload: response
-    };
+  const response = await jsonPlaceholder.get("/posts");
+  return {
+    type: "FETCH_POSTS",
+    payload: response
+  };
 };
 ```
+
 But this will return an error, because this action `fetchPosts` is not returning a plain JS object. You can prove that by placing the code above in bablejs. This is because of the `async` and `await` construct.
 
 one way to deal with it - and it would remove error message- is to return a `promise` in the payload as follows:
@@ -168,6 +168,64 @@ export const fetchPosts = () => {
 };
 ```
 
-but the above scenario -although we do not have error- it will not work because this action will be dispatched to reduces without the data is fetched yet from the api. 
+but the above scenario -although we do not have error- it will not work because this action will be dispatched to reduces without the data is fetched yet from the api.
 
 ## redux thunk as a middle ware
+
+now with the `redux-thunk` middleware the dispatch will send the promise to the middleware which will wait for data before sending that to the reducers.
+
+Redux thunk can take an object or a function from the action creator. Only when it gets a function that it starts to care about. 
+
+This function access the dispatch and manually invokes it when the data is returned from API. 
+
+now here are the steps to get `redux-thunk`. First in the `index.js` in `src/index.js` we import 
+
+```javascript
+import React from "react";
+import ReactDOM from "react-dom";
+import { Provider } from "react-redux";
+import { createStore, applyMiddleware } from "redux";
+import thunk from 'redux-thunk';
+
+import App from "./components/App";
+import reducers from "./reducers";
+
+const store = createStore(reducers, applyMiddleware(thunk))
+
+ReactDOM.render(
+  <Provider store={store}>
+    <App />
+  </Provider>,
+  document.querySelector("#root")
+);
+```
+
+and then the `action/index.js` becomes:
+
+```javascript
+import jsonPlaceholder from "../apis/jsonPlaceholder";
+
+export const fetchPosts = () => {
+  return async function(dispatch, getSate) {
+    const response = await jsonPlaceholder.get("/posts");
+    dispatch( {
+      type: "FETCH_POSTS",
+      payload: response
+    })
+  };
+};
+```
+which can further be refactored as:
+
+```javascript
+import jsonPlaceholder from "../apis/jsonPlaceholder";
+
+export const fetchPosts = () => async dispatch =>{
+    const response = await jsonPlaceholder.get("/posts");
+    dispatch( {
+      type: "FETCH_POSTS",
+      payload: response
+    })
+}
+```  
+In this way we have wired-up redux-thunk successfully. 
