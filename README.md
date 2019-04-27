@@ -125,3 +125,49 @@ export default connect(
   { fetchPosts }
 )(PostList);
 ```
+
+## API
+
+create a folder called `api` and inside `jsonplaceholder.js` with the following content:
+
+```javascript
+import axios from 'axios';
+
+export default axios.create({
+    baseURL: 'http://jsonplaceholder.typicode.com'
+})
+```
+
+Then inside the action we hookup the axios and return the payload as follows:
+
+```javascript
+import jsonPlaceholder from '../apis/jsonPlaceholder';
+
+
+export const fetchPosts = async () => {
+    const response = await jsonPlaceholder.get('/posts');
+    return {
+        type: "FETCH_POSTS",
+        payload: response
+    };
+};
+```
+But this will return an error, because this action `fetchPosts` is not returning a plain JS object. You can prove that by placing the code above in bablejs. This is because of the `async` and `await` construct.
+
+one way to deal with it - and it would remove error message- is to return a `promise` in the payload as follows:
+
+```javascript
+import jsonPlaceholder from "../apis/jsonPlaceholder";
+
+export const fetchPosts = () => {
+  const promise = jsonPlaceholder.get("/posts");
+  return {
+    type: "FETCH_POSTS",
+    payload: promise
+  };
+};
+```
+
+but the above scenario -although we do not have error- it will not work because this action will be dispatched to reduces without the data is fetched yet from the api. 
+
+## redux thunk as a middle ware
