@@ -369,3 +369,125 @@ renderList() {
     return <div className="ui relaxed divided list">{this.renderList()}</div>;
   }
 ```
+
+## Fetching users
+
+Our design dictates that we need to list the name of author against each post. That means we need to call another API with endpoint `/users/:id`. For that we need first to create anther action creator `fetchUser` and then anther reducer called `usersReducer`. 
+
+so first, we add a new action `FETCH_USER` as follows:
+
+```javascript
+import jsonPlaceholder from "../apis/jsonPlaceholder";
+
+export const fetchPosts = () => async dispatch => {
+  const response = await jsonPlaceholder.get("/posts");
+  dispatch({
+    type: "FETCH_POSTS",
+    payload: response.data
+  });
+};
+
+export const fetchUser = id => async dispatch => {
+  const response = await jsonPlaceholder.get(`/users/${id}`);
+  dispatch({ type: "FETCH_USER", payload: response.data });
+};
+```
+
+Then, we need to create a new reducer as follows in `src/reducers/usersReducer.js`
+
+```javascript
+export default (state = [], action) => {
+  switch (action.type) {
+    case "FETCH_USER":
+      return [...state, action.payload];
+    default:
+      return state;
+  }
+};
+```
+
+Note how we returned the state by ammending the payload. 
+
+Finally we can create a user header component as follows:
+
+```javascript
+import React from "react";
+import { connect } from "react-redux";
+import { fetchUser } from "../actions";
+
+class UserHeader extends React.Component {
+  componentDidMount() {
+    this.props.fetchUser(this.props.userId);
+  }
+  render() {
+    const user = this.props.users.find(user => user.id === this.props.userId);
+    if (!user){
+      return null;
+    }
+    return <div className="header">{user.name} </div>;
+  }
+}
+
+const mapStateToProps = state => {
+  return { users: state.users };
+};
+
+export default connect(
+  mapStateToProps,
+  { fetchUser }
+)(UserHeader);
+```
+which will be displayed inside our original posts compenents as follows:
+
+```javascript
+//truncated code above
+renderList() {
+    return this.props.posts.map(post => {
+      return (
+        <div className="item" key={post.id}>
+          <i className="large middle aligned icon user" />
+          <div className="content">
+            <div className="description">
+            <h2>{post.title}</h2>
+            <p>{post.body}</p>
+
+            </div>
+          </div>
+        </div>
+      );
+    });
+  }
+
+  //rest of the code
+  ```
+  We can now do a small refactoring in our userHeader as follows 
+
+  ```javascript
+  import React from "react";
+import { connect } from "react-redux";
+import { fetchUser } from "../actions";
+
+class UserHeader extends React.Component {
+  componentDidMount() {
+    this.props.fetchUser(this.props.userId);
+  }
+  render() {
+    const {user} = this.props;
+    if (!user){
+      return null;
+    }
+    return <div className="header">{user.name} </div>;
+  }
+}
+
+const mapStateToProps = (state, ownProps) => {
+  return { user: state.users.find(user=>user.id === ownProps.userId) };
+};
+
+export default connect(
+  mapStateToProps,
+  { fetchUser }
+)(UserHeader);
+```
+
+Note how we have a second argument `ownProps`. 
