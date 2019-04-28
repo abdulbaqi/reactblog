@@ -342,3 +342,30 @@ export default connect(
 ```
 
 A small change we need to adjust in our action is to assign the payload with values of response.data just not to overburder with unncessary data.
+
+### helper function to list post in the render
+
+just using the right semantic UI classes as follows
+
+```javascript
+renderList() {
+    return this.props.posts.map(post => {
+      return (
+        <div className="item" key={post.id}>
+          <i className="large middle aligned icon user" />
+          <div className="content">
+            <div className="description">
+            <h2>{post.title}</h2>
+            <p>{post.body}</p>
+
+            </div>
+          </div>
+        </div>
+      );
+    });
+  }
+  render() {
+    console.log(this.props.posts);
+    return <div className="ui relaxed divided list">{this.renderList()}</div>;
+  }
+```
