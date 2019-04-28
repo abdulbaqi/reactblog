@@ -265,17 +265,17 @@ in other words, a reducer gets a previous state and an action, and does somethin
 
 a third rule is that a reducer can only consider the new action and the current state to decide what to do, and never get our of itself and call some API, or reach out to DOM or get user input or any thing else. That means keep the reducer pure.
 
-The last rule is that the reducer never mutate the state that it receives, like by push or pop on an array for example. Or doing assignments of objects. 
+The last rule is that the reducer never mutate the state that it receives, like by push or pop on an array for example. Or doing assignments of objects.
 
-as a side note: in javascript numbers and strings are immutable. 
+as a side note: in javascript numbers and strings are immutable.
 
 another side note, is the `===` comparision between arrays in js is checking if both are fererencing the same array or object
 
 for example the follwoing is false
 
 ```javascript
-const numbers =[1,2,3]
-numbers === [1,2,3] //return false because === does not check the content, just the reference
+const numbers = [1, 2, 3];
+numbers === [1, 2, 3]; //return false because === does not check the content, just the reference
 ```
 
 So, here are some ways we can return objects or arrays
@@ -295,8 +295,9 @@ state.name = 'sam' //bad
 
 delete state.name //bad
 {...state, age:undefined}//good
-_.omit(state, 'age') //good 
+_.omit(state, 'age') //good
 ```
+
 given the above we have this version of postReducer.js
 
 ```javascript
@@ -312,3 +313,32 @@ export default (state = [], action) => {
 
 ## mapStateToProps
 
+now that we have all the wires in place, here is the new look of PostList.js
+
+```javascript
+import React from "react";
+import { connect } from "react-redux";
+
+import { fetchPosts } from "../actions";
+
+class PostList extends React.Component {
+  componentDidMount() {
+    this.props.fetchPosts();
+  }
+  render() {
+    console.log(this.props.posts);
+    return <div>post list will load here</div>;
+  }
+}
+
+const mapStateToProps = state => {
+  return { posts: state.posts };
+};
+
+export default connect(
+  mapStateToProps,
+  { fetchPosts }
+)(PostList);
+```
+
+A small change we need to adjust in our action is to assign the payload with values of response.data just not to overburder with unncessary data.
