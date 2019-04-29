@@ -491,3 +491,45 @@ export default connect(
 ```
 
 Note how we have a second argument `ownProps`. 
+
+Note also that the above solution will cause the fetch of users with each of 100 blog post although we have only 10 users. So, how to solve this redundency? 
+
+One way is to use `memoize` function of `lodash`. 
+
+When you open chrome console while in lodash website, then the library is loaded automatically for you. Also, when you want a new line press 'shift' and 'enter'.
+
+So, let us install lodash.
+
+```
+yarn add lodash
+```
+## Memoize function
+
+in the fetchUser action `src/actions/index.js` we use the right way to memoize as follows:
+
+```javascript
+import _ from "lodash";
+import jsonPlaceholder from "../apis/jsonPlaceholder";
+
+export const fetchPosts = () => async dispatch => {
+  const response = await jsonPlaceholder.get("/posts");
+  dispatch({
+    type: "FETCH_POSTS",
+    payload: response.data
+  });
+};
+
+export const fetchUser = id => dispatch => {
+  _fetchUser(id, dispatch);
+};
+
+const _fetchUser = _.memoize(async (id, dispatch) => {
+  const response = await jsonPlaceholder.get(`/users/${id}`);
+  dispatch({ type: "FETCH_USER", payload: response.data });
+});
+```
+
+With this solution, we can not re-fetch a user request again. 
+
+Here is a second way to do this.
+
