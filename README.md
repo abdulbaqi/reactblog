@@ -533,3 +533,73 @@ With this solution, we can not re-fetch a user request again.
 
 Here is a second way to do this.
 
+### fetchPostAndUser action creator
+
+In this alternative approach we create this new fetchPostAndUsers() which will: 1) call fetchPost, 2)get list of posts 3) fill all unique user IDs from the list of posts 4)iterave of those uniqe ids and 5) call fetch user with each userID
+
+we can use lodash's own map on arrays as well as uniq. So, the following code the `map` grabs all userId, and then passes it to `uniq` to get the unique ids only. 
+
+```javascript
+_.uniq(_.map(getState().posts, 'userId'))
+```
+
+so here is how to the actions look like
+
+```javascript
+import _ from "lodash";
+import jsonPlaceholder from "../apis/jsonPlaceholder";
+
+export const fetchPostsAndUsers = () => async (dispatch,getState) => {
+  // console.log('about to fetch...')
+  await dispatch(fetchPosts());
+  const userIds = _.uniq(_.map(getState().posts, 'userId'));
+  // console.log(userIds);
+  userIds.forEach(id => dispatch(fetchUser(id)));
+};
+
+export const fetchPosts = () => async dispatch => {
+  const response = await jsonPlaceholder.get("/posts");
+  dispatch({
+    type: "FETCH_POSTS",
+    payload: response.data
+  });
+};
+
+
+export const fetchUser = id => async dispatch => {
+  const response = await jsonPlaceholder.get(`/users/${id}`);
+  dispatch({ type: "FETCH_USER", payload: response.data });
+};
+
+```
+
+So, now we can remove the call to fetchuser from  userHeader
+
+```javascript
+import React from "react";
+import { connect } from "react-redux";
+// import { fetchUser } from "../actions";
+
+class UserHeader extends React.Component {
+  // componentDidMount() {
+  //   this.props.fetchUser(this.props.userId);
+  // }
+  render() {
+    const {user} = this.props;
+    if (!user){
+      return null;
+    }
+    return <div className="header">{user.name} </div>;
+  }
+}
+
+const mapStateToProps = (state, ownProps) => {
+  return { user: state.users.find(user=>user.id === ownProps.userId) };
+};
+
+export default connect(
+  mapStateToProps,
+  // { fetchUser }
+)(UserHeader);
+
+```
